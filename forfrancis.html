@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- By Brenton E. A. Bates -->
+<!-- STUDY Material: https://www.codeproject.com/articles/32387/reply-to-scott-henselman-s-interview-questions -->
+
+<title> JavaScript Knockout Tutorial </title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Bootstrap compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script type='text/javascript' src='https://code.jquery.com/jquery-3.3.1.js'></script>
+
+<!-- Bootstrap compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
+
+<!-- Knockout library -->
+<script type='text/javascript' src='http://ajax.aspnetcdn.com/ajax/knockout/knockout-3.4.2.js'></script>
+
+</head>
+
+<body>
+
+<div class="container">
+	
+	<div>
+		<h2>JavaScript Knockout Tutorial</h2>
+		<h3>Tasks</h3>
+	</div>
+
+	<div>
+		<form data-bind="submit: addTask">
+    			Add task: <input id="newTask" data-bind="value: newTaskText" placeholder="Insert New Task Here..." />
+   	 		<button type="submit">Add</button>
+		</form>
+	</div>
+
+	<div>
+		<ul data-bind="foreach: tasks, visible: tasks().length > 0">
+    			<li>
+        			<input type="checkbox" data-bind="checked: isDone" />
+        			<input data-bind="value: title, disable: isDone" />
+        			<a href="#" data-bind="click: $parent.removeTask">Delete</a>
+    			</li> 
+		</ul>
+	</div>
+
+	<div>
+		You have <b data-bind="text: incompleteTasks().length">&nbsp;</b> incomplete task(s)
+		<span data-bind="visible: incompleteTasks().length == 0"> - All Task(s) Completed</span>
+	</div>
+
+</div>
+
+
+<script>
+
+$(document).ready(function() {
+
+	console.log( "Document is ready to process our Javascript" );
+	console.log("AppStart");
+
+	function Task(data) {
+    		this.title = ko.observable(data.title);
+    		this.isDone = ko.observable(data.isDone);
+	}
+
+	function TaskListViewModel() {
+    		
+		// Data
+    		var self = this;
+    		self.tasks = ko.observableArray([]);
+    		self.newTaskText = ko.observable();
+    		
+		self.incompleteTasks = ko.computed(function() {       
+			return ko.utils.arrayFilter(self.tasks(), function(task) { return !task.isDone() });
+    		});
+
+    		// Operations
+    		self.addTask = function() {
+			
+			if ($("#newTask").val().length == 0) {
+				alert("Please give the task a description, to add it to the list.")
+				$("#newTask").focus();
+				return;        			
+    			}
+
+        		self.tasks.push(new Task({ title: this.newTaskText() }));
+        		self.newTaskText("");
+    		};
+    
+   		self.removeTask = function(task) { self.tasks.remove(task) };
+
+    		// Load initial state from server, convert it to Task instances, then populate self.tasks
+    		$.getJSON("/tasks", function(allData) {
+        		var mappedTasks = $.map(allData, function(item) { return new Task(item) });
+        		self.tasks(mappedTasks);
+    		});    
+	
+	}
+
+	ko.applyBindings(new TaskListViewModel());
+
+	console.log("AppEnd");
+});
+
+
+</script>
+
+</body>
+
+</html>
